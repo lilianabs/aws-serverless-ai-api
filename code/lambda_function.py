@@ -25,7 +25,8 @@ def lambda_handler(event, context):
         # Example: body = json.loads(event.get('body', '{}'))
         
         # 2. Insert your core business logic here
-        prompt = event["queryStringParameters"]["prompt"]
+        body = json.loads(event.get("body") or "{}")
+        prompt = body.get("prompt")
         
         result = bedrock.converse(
             modelId=MODEL_ID,

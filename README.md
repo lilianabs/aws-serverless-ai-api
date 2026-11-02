@@ -17,5 +17,15 @@ This repository contains template code to create the infrastructure and code for
 6. run curl "$(terraform output -raw base_url)/chat"
 
 To test the API run the following command:
-curl --get "$(terraform output -raw base_url)/chat" \
-  --data-urlencode "prompt=Explain briefly what is AWS lambda"
+cd infra
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain briefly what is AWS lambda"}' \
+  "$(terraform output -raw base_url)/chat"
+
+
+aws lambda invoke --region us-east-1 \
+  --function-name "$(terraform output -raw function_name)" \
+  --cli-binary-format raw-in-base64-out \
+  --payload '{"body": "{\"prompt\": \"Explain briefly what is AWS lambda\"}"}' \
+  response.json && cat response.json
