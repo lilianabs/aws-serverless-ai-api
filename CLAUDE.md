@@ -31,6 +31,6 @@ The system is a single synchronous path: API Gateway (HTTP API) → Lambda → A
 - **Model and region config** are set in the `aws_lambda_function.ai_api` environment block in `infra/main.tf` (`MODEL_ID`, `BEDROCK_REGION`), not in code. The `bedrock-runtime` client is created at module load, outside the handler, so it is reused across warm invocations.
 - **Routing:** the only route is `POST /chat` on the `serverless_lambda_gw` HTTP API, using `AWS_PROXY` integration. The stage auto-deploys.
 - **IAM:** the Lambda role (`serverless_lambda`) has `AWSLambdaBasicExecutionRole` plus `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream` on `Resource = "*"`. Tighten the resource if you touch this.
-- **Terraform state** is in `infra/terraform.tfstate` and is currently tracked by git. It holds resource IDs and may hold other sensitive values, so avoid committing changes to it.
+- **Terraform state** is in `infra/terraform.tfstate`. It is gitignored and no longer tracked. It holds resource IDs and may hold other sensitive values, so don't commit it.
 
 Everything in `infra/` targets `us-east-1` by default (`var.aws_region`). The Bedrock region is set separately to `us-east-1` in the Lambda environment.
