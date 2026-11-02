@@ -102,5 +102,4 @@ The Lambda code bucket is not configured with `force_destroy`, so `destroy` fail
 
 ## Notes
 
-- `infra/terraform.tfstate` is gitignored and no longer tracked. State files can contain sensitive values, so keep it out of git, or move state to a remote backend.
 - The IAM policy allows Bedrock invocation on all resources (`Resource = "*"`). Restrict it to the model ARN if you need least privilege.
