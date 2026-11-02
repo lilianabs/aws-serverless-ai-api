@@ -1,9 +1,14 @@
 import json
 import logging
+import os
+import boto3
 
 # Initialize the logger (Best practice: configure outside the handler to reuse across invocations)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+bedrock = boto3.client("bedrock-runtime", region_name=os.environ.get("BEDROCK_REGION", "us-east-1"))
+MODEL_ID = os.environ["MODEL_ID"]
 
 def lambda_handler(event, context):
     """
@@ -20,7 +25,16 @@ def lambda_handler(event, context):
         # Example: body = json.loads(event.get('body', '{}'))
         
         # 2. Insert your core business logic here
-        message = "Hello from AWS Lambda using Python!"
+        prompt = event["queryStringParameters"]["prompt"]
+        
+        result = bedrock.converse(
+            modelId=MODEL_ID,
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            system=[{"text": "You are a helpful assistant."}],
+            inferenceConfig={"maxTokens": 512, "temperature": 0.5},
+        )
+        
+        text = result["output"]["message"]["content"][0]["text"]
         
         # 3. Construct and return a structured response
         return {
@@ -29,7 +43,7 @@ def lambda_handler(event, context):
                 'Content-Type': 'application/json'
             },
             'body': json.dumps({
-                'message': message,
+                'message': text,
                 'success': True
             })
         }

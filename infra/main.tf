@@ -57,12 +57,22 @@ resource "aws_lambda_function" "ai_api" {
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.lambda_ai_api.key
 
-  runtime = "python3.13"
-  handler = "lambda_function.lambda_handler"
+  runtime       = "python3.13"
+  handler       = "lambda_function.lambda_handler"
+  architectures = ["x86_64"]
 
   source_code_hash = data.archive_file.lambda_ai_api.output_base64sha256
 
   role = aws_iam_role.lambda_exec.arn
+
+  timeout = 300
+
+  environment {
+    variables = {
+      BEDROCK_REGION = "us-east-1"
+      MODEL_ID       = "us.anthropic.claude-sonnet-4-6"
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "ai_api" {
@@ -91,6 +101,19 @@ resource "aws_iam_role" "lambda_exec" {
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_bedrock_access" {
+  name = "lambda-bedrock-permissions"
+  role = aws_iam_role.lambda_exec.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
+      Resource = "*"
+    }]
+  })
 }
 
 resource "aws_apigatewayv2_api" "lambda" {
@@ -134,7 +157,7 @@ resource "aws_apigatewayv2_integration" "ai_api" {
 resource "aws_apigatewayv2_route" "ai_api" {
   api_id = aws_apigatewayv2_api.lambda.id
 
-  route_key = "GET /chat"
+  route_key = "POST /chat"
   target    = "integrations/${aws_apigatewayv2_integration.ai_api.id}"
 }
 
